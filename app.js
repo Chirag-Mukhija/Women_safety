@@ -59,12 +59,19 @@ function requireLogin(req, res, next) {
 // Signup
 app.get('/signup', (req, res) => res.render('signup'));
 app.post('/signup', async (req, res) => {
-  const { name, email, password, emergencyContact } = req.body;
+  const { name, email, password, emergencyContact, emergencyEmail } = req.body;
   try {
+    if (!name || !email || !password || !emergencyContact) {
+      return res.send('Required fields are missing');
+    }
     if (await User.findOne({ email })) return res.send('User already exists');
     const hash = await bcrypt.hash(password, 10);
     const user = await User.create({
-      name, email, password: hash, emergencyContact
+      name, 
+      email, 
+      password: hash, 
+      emergencyContact,
+      emergencyEmail // This will be undefined if not provided, which is fine
     });
     req.session.user = user;
     // Redirect to main map page
