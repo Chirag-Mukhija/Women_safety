@@ -16,6 +16,7 @@
     "express": "^5.1.0",
     "express-session": "^1.18.1",
     "moment-timezone": "^0.5.48",
-    "mongoose": "^8.13.2"
+    "mongoose": "^8.13.2",
+    "nodemailer": "^6.10.0"
   }
 }

@@ -7,6 +7,7 @@ const dotenv     = require('dotenv');
 const bcrypt     = require('bcrypt');
 const Location   = require('./models/location');
 const User       = require('./models/user');
+const sendEmail = require('./utils/sendEmail');
 
 dotenv.config();
 const app = express();
@@ -144,13 +145,43 @@ app.post('/location', requireLogin, async (req, res) => {
 app.post('/panic', requireLogin, async (req, res) => {
   const { latitude, longitude } = req.body;
   const user = req.session.user;
+
   if (!latitude || !longitude)
     return res.status(400).json({ message: 'Missing coords' });
+
   try {
+    // Save panic alert in the DB
     await Location.create({ latitude, longitude, userId: user._id });
-    res.json({ message: 'Panic alert recorded!' });
+
+    // Send emergency email if emergencyEmail is saved
+    if (user.emergencyEmail) {
+      const googleMapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
+      const message = `
+🚨 Panic Alert!
+
+Name: ${user.name}
+Email: ${user.email}
+
+📍 Location: ${googleMapsLink}
+🕒 Time: ${new Date().toLocaleString()}
+
+This is an emergency alert triggered from the Women’s Safety App.
+      `.trim();
+
+      await sendEmail(
+        user.emergencyEmail,
+        '🚨 Emergency Alert - Panic Button Pressed',
+        message
+      );
+
+      console.log('📧 Email sent to emergency contact:', user.emergencyEmail);
+    } else {
+      console.log('⚠️ No emergency email found for this user.');
+    }
+
+    res.json({ message: 'Panic alert recorded and email sent (if applicable).' });
   } catch (e) {
-    console.error(e);
+    console.error('❌ Panic alert error:', e);
     res.status(500).json({ message: 'Panic save failed' });
   }
 });
@@ -182,4 +213,6 @@ app.get('/map', requireLogin, (req, res) => {
 app.listen(process.env.PORT || 8080, () => {
   console.log('Server listening on port 8080');
 });
+
+
 
