@@ -22,11 +22,14 @@ app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
+app.use(express.static(path.join(__dirname, '..')));
 
+// Session configuration (persistent login: cookie lasts 3 days)
 app.use(session({
   secret: 'yourSecretKey',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: { maxAge: 3 * 24 * 60 * 60 * 1000 } // 3 days in milliseconds
 }));
 
 // —————————————
@@ -64,7 +67,8 @@ app.post('/signup', async (req, res) => {
       name, email, password: hash, emergencyContact
     });
     req.session.user = user;
-    res.redirect('/dashboard');
+    // Redirect to main map page
+    res.redirect('/map');
   } catch (e) {
     console.error(e);
     res.send('Signup failed');
@@ -80,7 +84,8 @@ app.post('/login', async (req, res) => {
     if (!user || !await bcrypt.compare(password, user.password))
       return res.send('Invalid credentials');
     req.session.user = user;
-    res.redirect('/dashboard');
+    // Redirect to main map page
+    res.redirect('/map');
   } catch (e) {
     console.error(e);
     res.send('Login failed');
@@ -92,11 +97,6 @@ app.get('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
 });
 
-// Dashboard
-app.get('/dashboard', requireLogin, (req, res) => {
-  res.render('dashboard', { user: req.session.user });
-});
-
 // Profile (GET)
 app.get('/profile', requireLogin, async (req, res) => {
   try {
@@ -105,7 +105,7 @@ app.get('/profile', requireLogin, async (req, res) => {
     res.render('profile', { user, justUpdated });
   } catch (e) {
     console.error(e);
-    res.redirect('/dashboard');
+    res.redirect('/map');
   }
 });
 
@@ -151,7 +151,7 @@ app.post('/panic', requireLogin, async (req, res) => {
     // Save panic alert in the DB
     await Location.create({ latitude, longitude, userId: user._id });
 
-    // Send emergency email if available
+    // Send emergency email if an emergencyEmail is provided
     if (user.emergencyEmail) {
       const googleMapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
       const message = `
@@ -170,18 +170,18 @@ This is an emergency alert triggered from the Women’s Safety App.
         '🚨 Emergency Alert - Panic Button Pressed',
         message
       );
-      console.log('📧 Email sent to emergency contact:', user.emergencyEmail);
+      console.log('Email sent to emergency contact:', user.emergencyEmail);
     } else {
-      console.log('⚠️ No emergency email found for this user.');
+      console.log('No emergency email found for this user.');
     }
     res.json({ message: 'Panic alert recorded and email sent (if applicable).' });
   } catch (e) {
-    console.error('❌ Panic alert error:', e);
+    console.error('Panic alert error:', e);
     res.status(500).json({ message: 'Panic save failed' });
   }
 });
 
-// JSON for map: returns the 50 most recent location records.
+// JSON for map: Returns up to 50 most recent location records.
 app.get('/locations-data', requireLogin, async (req, res) => {
   try {
     const locations = await Location
@@ -195,7 +195,7 @@ app.get('/locations-data', requireLogin, async (req, res) => {
   }
 });
 
-// Map page with AI evaluation (googleApiKey passed to view)
+// Map page with AI evaluation (Google Maps API key is passed from .env)
 app.get('/map', requireLogin, (req, res) => {
   res.render('map', {
     googleApiKey: process.env.GOOGLE_MAPS_KEY,
@@ -211,10 +211,10 @@ app.post('/evaluate-location', requireLogin, async (req, res) => {
   if (!latitude || !longitude)
     return res.status(400).json({ message: 'Missing coords' });
     
-  // Instantiate GoogleGenAI client with your Gemini API key.
-  const ai = new GoogleGenAI({ apiKey: "AIzaSyBL55AFLQa5FSAP3G9QbtlDFXzFe7jSgww" });
+  // Instantiate the GoogleGenAI client using the API key from .env
+  const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI_API_KEY });
   
-  // Construct a detailed prompt.
+  // Construct a detailed prompt for Gemini
   const prompt = `
 Using past crime data, recent news headlines, National Crime Bureau records, and other public data, evaluate the safety of the location at latitude ${latitude} and longitude ${longitude}.
 Return exactly a JSON object with two keys:
@@ -223,7 +223,7 @@ Return exactly a JSON object with two keys:
 If unable to decide, default to a rating of 3 and "Okay Area".
 Return only valid JSON without any extra text.
   `.trim();
-
+  
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
@@ -257,8 +257,19 @@ Return only valid JSON without any extra text.
 });
 
 // —————————————
-// Start server
+// Scheduled Deletion: Automatically delete location records older than 18 hours
+setInterval(async () => {
+  try {
+    const cutoff = new Date(Date.now() - 18 * 60 * 60 * 1000); // 18 hours ago
+    const result = await Location.deleteMany({ timestamp: { $lt: cutoff } });
+    console.log(`Cleaned up ${result.deletedCount} location record(s) older than 18 hours.`);
+  } catch (error) {
+    console.error('Error cleaning up old location data:', error);
+  }
+}, 60 * 60 * 1000); // Runs every hour
+
 // —————————————
+// Start the Server
 app.listen(process.env.PORT || 8080, () => {
   console.log('Server listening on port 8080');
 });
