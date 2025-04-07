@@ -2,7 +2,6 @@
 <html>
 <head>
   <title>My Live Location</title>
-  <!-- Ensure responsiveness on mobile devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Google Fonts for a modern look -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
@@ -16,42 +15,70 @@
       --font: 'Roboto', sans-serif;
       --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    /* Global Styles */
-    body {
+    /* Global Reset */
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: var(--font);
+    }
+    body {
       background: var(--light-bg);
+      font-family: var(--font);
       color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
       padding: 20px;
     }
-    /* Centered Container */
-    .container {
+    /* Header with Profile & Logout */
+    header {
       width: 100%;
-      max-width: 600px;
+      background: var(--dark-bg);
+      box-shadow: var(--box-shadow);
+      padding: 10px 20px;
+      margin-bottom: 20px;
+    }
+    .header-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-container .logo h2 {
+      font-size: 1.75rem;
+      color: var(--primary-color);
+      margin: 0;
+    }
+    .header-buttons {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .header-btn {
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-weight: 500;
+      transition: background 0.3s;
+      color: #fff;
+    }
+    .header-btn.profile {
+      background: var(--primary-color);
+    }
+    .header-btn.logout {
+      background: var(--danger-color);
+    }
+    .header-btn:hover {
+      opacity: 0.9;
+    }
+    /* Main Container */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
       background: var(--dark-bg);
       border-radius: 8px;
       box-shadow: var(--box-shadow);
       padding: 20px;
-      margin: 0 auto;
     }
-    .back-link {
-      color: var(--primary-color);
-      text-decoration: none;
-      font-weight: 500;
-    }
-    .back-link:hover {
-      text-decoration: underline;
-    }
-    h1 {
-      margin-top: 0;
-      margin-bottom: 10px;
-    }
-    /* Toggle Container and Switch Styles */
+    /* Toggle Container (Voice Detection) */
     .toggle-container {
       display: flex;
       align-items: center;
@@ -98,21 +125,23 @@
     input:checked + .slider:before {
       transform: translateX(26px);
     }
-    /* Modern Panic Button */
+    /* Panic Button: Bigger by default */
     .panic-btn {
+      display: block;
       margin: 10px auto;
-      padding: 8px 16px;
-      font-size: 16px;
+      padding: 16px 32px;
+      font-size: 24px;
       background: var(--danger-color);
-      color: white;
+      color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.3s ease;
       box-shadow: var(--box-shadow);
     }
     /* Evaluation Display */
     #area-rating {
+      text-align: center;
       margin: 10px auto;
       padding: 5px 10px;
       font-size: 18px;
@@ -121,7 +150,7 @@
       border-radius: 4px;
       transition: background-color 0.3s ease;
     }
-    /* Responsive Map as a square */
+    /* Responsive Square Map */
     #map {
       width: 100%;
       aspect-ratio: 1 / 1;
@@ -129,32 +158,41 @@
       border: 1px solid #ccc;
       border-radius: 6px;
     }
-    /* Adjust styles on smaller screens */
+    /* Responsive Adjustments */
     @media (max-width: 600px) {
-      body {
-        padding: 10px;
-      }
-      .container {
-        padding: 15px;
-      }
-      .panic-btn {
-        font-size: 14px;
-        padding: 6px 12px;
+      .header-container {
+        flex-direction: column;
+        gap: 10px;
       }
       #area-rating {
         font-size: 16px;
+      }
+      .panic-btn {
+        font-size: 20px;
+        padding: 12px 24px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <a href="/dashboard" class="back-link">← Back to Dashboard</a>
-    <h1>Current Location</h1>
+  <!-- Header Section with Profile & Logout Buttons -->
+  <header>
+    <div class="header-container">
+      <div class="logo">
+        <h2>My Safety App</h2>
+      </div>
+      <div class="header-buttons">
+        <a href="/profile" class="header-btn profile">My Profile</a>
+        <a href="/logout" class="header-btn logout">Logout</a>
+      </div>
+    </div>
+  </header>
 
+  <!-- Main Content Container -->
+  <div class="container">
     <div class="toggle-container">
       <label>Voice Panic Alert</label>
-      <!-- Voice detection is off by default (no "checked" attribute) -->
+      <!-- Voice detection is off by default -->
       <label class="switch">
         <input type="checkbox" id="voiceToggle" onchange="toggleVoiceControl()">
         <span class="slider"></span>
@@ -162,12 +200,11 @@
     </div>
 
     <button onclick="sendPanic(this)" class="panic-btn">🚨 Send Panic Alert</button>
-    <!-- Area evaluation output dynamically updated by Gemini integration -->
     <div id="area-rating">Evaluating area...</div>
     <div id="map"></div>
   </div>
 
-  <!-- JavaScript Section: All existing functionality is preserved -->
+  <!-- JavaScript Section -->
   <script>
     let map, marker, lastPanic = 0;
     const triggerWord = "help";
@@ -191,7 +228,7 @@
         const res = await fetch('/locations-data', { credentials: 'include' });
         const locs = await res.json();
         if (!locs.length) {
-          // Fallback: use device's geolocation if backend has no data
+          // Fallback: use device's geolocation if no backend data exists
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
               const { latitude, longitude } = pos.coords;
@@ -240,7 +277,7 @@
           return;
         }
         const { latitude, longitude } = locs[0];
-        // Call the evaluation endpoint (using Gemini integration)
+        // Call the backend evaluation endpoint (using Gemini integration)
         const evalRes = await fetch('/evaluate-location', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -249,7 +286,7 @@
         });
         const evalData = await evalRes.json();
 
-        // Fallback defaults if undefined
+        // Use fallback defaults if data is undefined
         let rating = typeof evalData.rating !== 'undefined' ? Number(evalData.rating) : 3;
         let judgement = typeof evalData.judgement !== 'undefined' ? evalData.judgement : "Okay Area";
 
@@ -257,12 +294,12 @@
         const ratingEl = document.getElementById('area-rating');
         ratingEl.textContent = `Area Safety Rating: ${rating}/5 - ${judgement}`;
 
-        // Reset styles to default
+        // Reset default styles
         ratingEl.style.backgroundColor = '';
         const panicBtn = document.querySelector('.panic-btn');
-        panicBtn.style.fontSize = '16px';
-        panicBtn.style.padding = '8px 16px';
-        panicBtn.style.borderRadius = '6px';
+        panicBtn.style.fontSize = '24px';
+        panicBtn.style.padding = '16px 32px';
+        panicBtn.style.borderRadius = '10px';
         panicBtn.style.transform = 'scale(1)';
         panicBtn.style.backgroundColor = 'var(--danger-color)';
 
@@ -273,9 +310,9 @@
           alert("Multiple Warning: Significant risk indicators detected in this area.");
         } else if (rating === 1) {
           panicBtn.style.backgroundColor = 'red';
-          panicBtn.style.fontSize = '22px';
-          panicBtn.style.padding = '16px 32px';
-          panicBtn.style.borderRadius = '10px';
+          panicBtn.style.fontSize = '26px';
+          panicBtn.style.padding = '18px 36px';
+          panicBtn.style.borderRadius = '12px';
           panicBtn.style.transform = 'scale(1.2)';
           alert("Critical Warning: The area is rated 1/5 - Unsafe Area. This location is extremely dangerous!");
           alert("Immediate Action Required: Use the panic button right away!");
@@ -384,11 +421,18 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       // Set voice detection off by default
-      document.getElementById("voiceToggle").checked = false;
+      const voiceToggle = document.getElementById("voiceToggle");
+      voiceToggle.checked = false;
       toggleVoiceControl();
+      // After 7 seconds, if voice detection is still off, alert the user to enable it for enhanced safety.
+      setTimeout(() => {
+        if (!voiceToggle.checked) {
+          alert("For enhanced safety, please consider enabling voice detection using the toggle above.");
+        }
+      }, 7000);
     });
   </script>
-
+  
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrI9BCKW9G6l67-QUfVkLwywpLLA1hLcQ&callback=initMap" async defer></script>
 </body>
 </html>
