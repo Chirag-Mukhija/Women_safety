@@ -107,13 +107,15 @@ app.get('/profile', requireLogin, async (req, res) => {
 
 // Profile (POST)
 app.post('/profile/update', requireLogin, async (req, res) => {
-  const { emergencyContact } = req.body;
+  const { emergencyContact, emergencyEmail } = req.body;
+
   try {
     const updated = await User.findByIdAndUpdate(
       req.session.user._id,
-      { emergencyContact },
+      { emergencyContact, emergencyEmail },
       { new: true }
     );
+    
     req.session.user = updated;
     res.status(200).json({ message: 'Profile updated' });
   } catch (e) {
@@ -121,6 +123,7 @@ app.post('/profile/update', requireLogin, async (req, res) => {
     res.status(500).json({ message: 'Failed to update profile' });
   }
 });
+
 
 // Save location
 app.post('/location', requireLogin, async (req, res) => {
@@ -168,10 +171,15 @@ app.get('/locations-data', requireLogin, async (req, res) => {
 
 // Map page
 app.get('/map', requireLogin, (req, res) => {
-  res.render('map', { googleApiKey: process.env.GOOGLE_MAPS_KEY || 'AIzaSyBrI9BCKW9G6l67-QUfVkLwywpLLA1hLcQ' });
+  res.render('map', {
+    googleApiKey: process.env.GOOGLE_MAPS_KEY,
+    user: req.session.user
+  });
+  
 });
 
 // Start server
 app.listen(process.env.PORT || 8080, () => {
   console.log('Server listening on port 8080');
 });
+

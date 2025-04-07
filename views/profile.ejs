@@ -95,20 +95,22 @@
 
   <div class="container">
     <form id="profileForm">
-        <label for="name">Name</label>
-        <input type="text" name="name" id="name" value="<%= user.name %>" readonly>
-      
-        <label for="email">Email</label>
-        <input type="email" name="email" id="email" value="<%= user.email %>" readonly>
-      
-        <label for="emergencyContact">Emergency Contact</label>
-        <input type="text" name="emergencyContact" id="emergencyContact" value="<%= user.emergencyContact || '' %>" required>
-      
-        <div class="btn-container">
-          <button type="submit" class="btn">Update Profile</button>
-        </div>
-      </form>
-      
+      <label for="name">Name</label>
+      <input type="text" name="name" id="name" value="<%= user.name %>" readonly>
+    
+      <label for="email">Email</label>
+      <input type="email" name="email" id="email" value="<%= user.email %>" readonly>
+    
+      <label for="emergencyContact">Emergency Contact</label>
+      <input type="text" name="emergencyContact" id="emergencyContact" value="<%= user.emergencyContact || '' %>" required>
+
+      <label for="emergencyEmail">Emergency Email</label>
+      <input type="email" name="emergencyEmail" id="emergencyEmail" value="<%= user.emergencyEmail || '' %>" required>
+    
+      <div class="btn-container">
+        <button type="submit" class="btn">Update Profile</button>
+      </div>
+    </form>
   </div>
 
   <div class="back-btn">
@@ -121,17 +123,17 @@
 
       const formData = new FormData(this);
       const data = {
-        emergencyContact: formData.get("emergencyContact")
+        emergencyContact: formData.get("emergencyContact"),
+        emergencyEmail: formData.get("emergencyEmail")
       };
 
       const res = await fetch("/profile/update", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify(data)
-});
-
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
 
       if (res.ok) {
         alert("Profile updated successfully!");
