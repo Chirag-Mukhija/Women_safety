@@ -499,5 +499,21 @@
   </script>
   
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrI9BCKW9G6l67-QUfVkLwywpLLA1hLcQ&callback=initMap" async defer></script>
+  <script src="/js/shake.js"></script>
+  <script>
+    const myShakeEvent = new Shake({
+      threshold: 15,
+      timeout: 1000
+    });
+  
+    myShakeEvent.start();
+  
+    window.addEventListener('shake', function () {
+      console.log("Shake detected!");
+      const panicButton = document.querySelector('.panic-btn');
+      sendPanic(panicButton);
+    }, false);
+  </script>
+
 </body>
 </html>
