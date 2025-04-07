@@ -201,15 +201,15 @@
       </div>
       
       <div class="mb-3">
-        <label for="emergencyContact" class="form-label">Emergency Contact</label>
+        <label for="emergencyContact" class="form-label">Emergency Contact <span style="color: red;">*</span></label>
         <input type="text" class="form-control" name="emergencyContact" id="emergencyContact" 
-               value="<%= user.emergencyContact || '' %>" required>
+               value="<%= user.emergencyContact || '' %>" required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number">
       </div>
       
       <div class="mb-3">
         <label for="emergencyEmail" class="form-label">Emergency Email</label>
         <input type="email" class="form-control" name="emergencyEmail" id="emergencyEmail" 
-               value="<%= user.emergencyEmail || '' %>" required>
+               value="<%= user.emergencyEmail || '' %>">
       </div>
       
       <button type="submit" class="btn btn-primary">Update Profile</button>
@@ -218,7 +218,7 @@
     
   </div>
 
-  <!-- JavaScript (Functionality remains exactly the same) -->
+  <!-- JavaScript (Updated redirect path) -->
   <script>
     document.getElementById("profileForm").addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -239,7 +239,7 @@
 
       if (res.ok) {
         alert("Profile updated successfully!");
-        window.location.href = "/dashboard";
+        window.location.href = "/map";
       } else {
         alert("Failed to update profile.");
       }

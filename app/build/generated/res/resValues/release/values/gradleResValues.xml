@@ -24,7 +24,7 @@
     <!-- Value from default config. -->
     <integer name="splashScreenFadeOutDuration">300</integer>
     <!-- Value from default config. -->
-    <string name="appName" translatable="false">AI for Women\'s Safety</string>
+    <string name="appName" translatable="false">SAFEHer</string>
     <!-- Value from default config. -->
     <string name="fallbackType" translatable="false">customtabs</string>
     <!-- Value from default config. -->
@@ -32,9 +32,9 @@
     <!-- Value from default config. -->
     <string name="generatorApp" translatable="false">bubblewrap-cli</string>
     <!-- Value from default config. -->
-    <string name="hostName" translatable="false">starfish-proper-briefly.ngrok-free.app</string>
+    <string name="hostName" translatable="false">starfish-proper-briefly.ngrok-free.app/</string>
     <!-- Value from default config. -->
-    <string name="launchUrl" translatable="false">https://starfish-proper-briefly.ngrok-free.apphome</string>
+    <string name="launchUrl" translatable="false">https://starfish-proper-briefly.ngrok-free.app/home</string>
     <!-- Value from default config. -->
     <string name="launcherName" translatable="false">SAFEHer</string>
     <!-- Value from default config. -->

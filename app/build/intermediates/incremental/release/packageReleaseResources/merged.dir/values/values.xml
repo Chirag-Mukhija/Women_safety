@@ -11,13 +11,13 @@
     <color name="navigationDividerColorDark">#000000</color>
     <color name="shortcut_background">#F5F5F5</color>
     <integer name="splashScreenFadeOutDuration">300</integer>
-    <string name="appName" translatable="false">AI for Women\'s Safety</string>
+    <string name="appName" translatable="false">SAFEHer</string>
     <string name="assetStatements">
     [{
         \"relation\": [\"delegate_permission/common.handle_all_urls\"],
         \"target\": {
             \"namespace\": \"web\",
-            \"site\": \"https://starfish-proper-briefly.ngrok-free.app\"
+            \"site\": \"https://starfish-proper-briefly.ngrok-free.app/\"
         }
     }]
     
@@ -25,8 +25,8 @@
     <string name="fallbackType" translatable="false">customtabs</string>
     <string name="fullScopeUrl" translatable="false">https://raw.githubusercontent.com/Chirag-Mukhija/Women_safety/refs/heads/main/</string>
     <string name="generatorApp" translatable="false">bubblewrap-cli</string>
-    <string name="hostName" translatable="false">starfish-proper-briefly.ngrok-free.app</string>
-    <string name="launchUrl" translatable="false">https://starfish-proper-briefly.ngrok-free.apphome</string>
+    <string name="hostName" translatable="false">starfish-proper-briefly.ngrok-free.app/</string>
+    <string name="launchUrl" translatable="false">https://starfish-proper-briefly.ngrok-free.app/home</string>
     <string name="launcherName" translatable="false">SAFEHer</string>
     <string name="orientation" translatable="false">default</string>
     <string name="providerAuthority" translatable="false">com.sfe.her.fileprovider</string>

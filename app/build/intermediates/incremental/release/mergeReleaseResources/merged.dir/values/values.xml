@@ -102,14 +102,14 @@
     <integer name="google_play_services_version">12451000</integer>
     <integer name="splashScreenFadeOutDuration">300</integer>
     <integer name="status_bar_notification_info_maxnum">999</integer>
-    <string name="appName" translatable="false">AI for Women\'s Safety</string>
+    <string name="appName" translatable="false">SAFEHer</string>
     <string name="app_name">Android Browser Helper</string>
     <string name="assetStatements">
     [{
         \"relation\": [\"delegate_permission/common.handle_all_urls\"],
         \"target\": {
             \"namespace\": \"web\",
-            \"site\": \"https://starfish-proper-briefly.ngrok-free.app\"
+            \"site\": \"https://starfish-proper-briefly.ngrok-free.app/\"
         }
     }]
     
@@ -139,8 +139,8 @@
     <string name="fallback_menu_item_share_link">Share link</string>
     <string name="fullScopeUrl" translatable="false">https://raw.githubusercontent.com/Chirag-Mukhija/Women_safety/refs/heads/main/</string>
     <string name="generatorApp" translatable="false">bubblewrap-cli</string>
-    <string name="hostName" translatable="false">starfish-proper-briefly.ngrok-free.app</string>
-    <string name="launchUrl" translatable="false">https://starfish-proper-briefly.ngrok-free.apphome</string>
+    <string name="hostName" translatable="false">starfish-proper-briefly.ngrok-free.app/</string>
+    <string name="launchUrl" translatable="false">https://starfish-proper-briefly.ngrok-free.app/home</string>
     <string name="launcherName" translatable="false">SAFEHer</string>
     <string name="manage_space_no_data_toast">This app holds no browsing data.</string>
     <string name="manage_space_not_supported_toast">This app\'s data is stored in %1$s.</string>
