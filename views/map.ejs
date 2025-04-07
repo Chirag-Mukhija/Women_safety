@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Current Location Only</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 600px;
+      width: 100%;
+      margin-top: 20px;
+    }
+    .panic-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: red;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="text-center">
+  <h1>Current Location</h1>
+
+  <!-- Panic Button -->
+  <button onclick="sendPanic(this)" class="panic-btn">🚨 Send Panic Alert</button>
+
+  <!-- Map Container -->
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([0, 0], 15);
+    let marker;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19
+    }).addTo(map);
+
+    // Only show the most recent location
+    async function loadCurrentLocation() {
+      try {
+        const res = await fetch('/locations-data');
+        const locations = await res.json();
+        if (!locations.length) return;
+
+        // Take the very latest entry
+        const loc = locations[0];
+        const { latitude, longitude } = loc;
+
+        // Center map there
+        map.setView([latitude, longitude], 15);
+
+        // Remove previous marker if exists
+        if (marker) map.removeLayer(marker);
+
+        // Add a single marker
+        marker = L.marker([latitude, longitude]).addTo(map)
+          .bindPopup(`Lat: ${latitude}<br>Lng: ${longitude}`)
+          .openPopup();
+
+      } catch (err) {
+        console.error('Error fetching location data:', err);
+      }
+    }
+
+    // Initial load & then every 5s
+    loadCurrentLocation();
+    setInterval(loadCurrentLocation, 5000);
+
+    // Panic button logic (same as before)
+    async function sendPanic(button) {
+      button.disabled = true;
+      if (!navigator.geolocation) {
+        alert('Geolocation not supported');
+        button.disabled = false;
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async pos => {
+        try {
+          const res = await fetch('/panic', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude
+            })
+          });
+          const data = await res.json();
+          alert(data.message || 'Panic alert sent!');
+          loadCurrentLocation(); // immediately update the map
+        } catch (err) {
+          console.error(err);
+          alert('Failed to send alert');
+        } finally {
+          button.disabled = false;
+        }
+      }, () => {
+        alert('Enable location services');
+        button.disabled = false;
+      });
+    }
+  </script>
+</body>
+</html>
