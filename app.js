@@ -7,7 +7,10 @@ const dotenv     = require('dotenv');
 const bcrypt     = require('bcrypt');
 const Location   = require('./models/location');
 const User       = require('./models/user');
-const sendEmail = require('./utils/sendEmail');
+const sendEmail  = require('./utils/sendEmail');
+
+// Import Google Gemini API module
+const { GoogleGenAI } = require('@google/genai');
 
 dotenv.config();
 const app = express();
@@ -109,14 +112,12 @@ app.get('/profile', requireLogin, async (req, res) => {
 // Profile (POST)
 app.post('/profile/update', requireLogin, async (req, res) => {
   const { emergencyContact, emergencyEmail } = req.body;
-
   try {
     const updated = await User.findByIdAndUpdate(
       req.session.user._id,
       { emergencyContact, emergencyEmail },
       { new: true }
     );
-    
     req.session.user = updated;
     res.status(200).json({ message: 'Profile updated' });
   } catch (e) {
@@ -124,7 +125,6 @@ app.post('/profile/update', requireLogin, async (req, res) => {
     res.status(500).json({ message: 'Failed to update profile' });
   }
 });
-
 
 // Save location
 app.post('/location', requireLogin, async (req, res) => {
@@ -145,15 +145,13 @@ app.post('/location', requireLogin, async (req, res) => {
 app.post('/panic', requireLogin, async (req, res) => {
   const { latitude, longitude } = req.body;
   const user = req.session.user;
-
   if (!latitude || !longitude)
     return res.status(400).json({ message: 'Missing coords' });
-
   try {
     // Save panic alert in the DB
     await Location.create({ latitude, longitude, userId: user._id });
 
-    // Send emergency email if emergencyEmail is saved
+    // Send emergency email if available
     if (user.emergencyEmail) {
       const googleMapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
       const message = `
@@ -167,18 +165,15 @@ Email: ${user.email}
 
 This is an emergency alert triggered from the Women’s Safety App.
       `.trim();
-
       await sendEmail(
         user.emergencyEmail,
         '🚨 Emergency Alert - Panic Button Pressed',
         message
       );
-
       console.log('📧 Email sent to emergency contact:', user.emergencyEmail);
     } else {
       console.log('⚠️ No emergency email found for this user.');
     }
-
     res.json({ message: 'Panic alert recorded and email sent (if applicable).' });
   } catch (e) {
     console.error('❌ Panic alert error:', e);
@@ -186,7 +181,7 @@ This is an emergency alert triggered from the Women’s Safety App.
   }
 });
 
-// JSON for map
+// JSON for map: returns the 50 most recent location records.
 app.get('/locations-data', requireLogin, async (req, res) => {
   try {
     const locations = await Location
@@ -200,19 +195,70 @@ app.get('/locations-data', requireLogin, async (req, res) => {
   }
 });
 
-// Map page
+// Map page with AI evaluation (googleApiKey passed to view)
 app.get('/map', requireLogin, (req, res) => {
   res.render('map', {
     googleApiKey: process.env.GOOGLE_MAPS_KEY,
     user: req.session.user
   });
-  
 });
 
+// —————————————
+// New Endpoint: Evaluate Location Safety using Gemini AI
+// —————————————
+app.post('/evaluate-location', requireLogin, async (req, res) => {
+  const { latitude, longitude } = req.body;
+  if (!latitude || !longitude)
+    return res.status(400).json({ message: 'Missing coords' });
+    
+  // Instantiate GoogleGenAI client with your Gemini API key.
+  const ai = new GoogleGenAI({ apiKey: "AIzaSyBL55AFLQa5FSAP3G9QbtlDFXzFe7jSgww" });
+  
+  // Construct a detailed prompt.
+  const prompt = `
+Using past crime data, recent news headlines, National Crime Bureau records, and other public data, evaluate the safety of the location at latitude ${latitude} and longitude ${longitude}.
+Return exactly a JSON object with two keys:
+  "rating": an integer (1, 2, 3, 4, or 5) where 5 means extremely safe and 1 means extremely unsafe.
+  "judgement": a one-word value that must be exactly one of either "Safe Area" (if rating is 4 or 5), "Okay Area" (if rating is 3), or "Unsafe Area" (if rating is 1 or 2).
+If unable to decide, default to a rating of 3 and "Okay Area".
+Return only valid JSON without any extra text.
+  `.trim();
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
+    });
+
+    let result;
+    try {
+      result = JSON.parse(response.text);
+    } catch (err) {
+      console.error("Failed to parse AI response as JSON", err, response.text);
+      return res.json({ rating: 3, judgement: "Okay Area" });
+    }
+    
+    const rating = Number(result.rating);
+    const validRatings = [1, 2, 3, 4, 5];
+    const validJudgements = ["Safe Area", "Okay Area", "Unsafe Area"];
+    
+    if (!validRatings.includes(rating) || !validJudgements.includes(result.judgement)) {
+      result.rating = 3;
+      result.judgement = "Okay Area";
+    } else {
+      result.rating = rating;
+    }
+    
+    res.json(result);
+  } catch (e) {
+    console.error("Gemini API error:", e);
+    res.json({ rating: 3, judgement: "Okay Area" });
+  }
+});
+
+// —————————————
 // Start server
+// —————————————
 app.listen(process.env.PORT || 8080, () => {
   console.log('Server listening on port 8080');
 });
-
-
-
