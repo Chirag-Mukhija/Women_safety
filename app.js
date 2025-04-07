@@ -277,3 +277,10 @@ app.listen(process.env.PORT || 8080, () => {
 app.get('/home', (req, res) => {
   res.render('home.ejs');
 });
+ app.get('/features', (req, res) => {
+  res.render('features.ejs');
+});
+
+app.get('/how-it-works', (req, res) => {
+  res.render('how-it-works.ejs');
+})
