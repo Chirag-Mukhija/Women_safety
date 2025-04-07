@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Profile</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 30px;
+      color: #333;
+    }
+
+    .container {
+      background: white;
+      max-width: 500px;
+      margin: 40px auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      color: #444;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+      background-color: #f5f5f5;
+    }
+
+    input[readonly] {
+      background-color: #e8e8e8;
+      color: #555;
+      cursor: not-allowed;
+    }
+
+    .btn-container {
+      text-align: center;
+      margin-top: 25px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+
+    .back-btn {
+      display: block;
+      margin: 20px auto 0;
+      text-align: center;
+    }
+
+    .back-btn button {
+      background: #6c757d;
+      color: white;
+      padding: 8px 18px;
+      font-size: 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .back-btn button:hover {
+      background: #5a6268;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>My Profile</h1>
+
+  <div class="container">
+    <form id="profileForm">
+        <label for="name">Name</label>
+        <input type="text" name="name" id="name" value="<%= user.name %>" readonly>
+      
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" value="<%= user.email %>" readonly>
+      
+        <label for="emergencyContact">Emergency Contact</label>
+        <input type="text" name="emergencyContact" id="emergencyContact" value="<%= user.emergencyContact || '' %>" required>
+      
+        <div class="btn-container">
+          <button type="submit" class="btn">Update Profile</button>
+        </div>
+      </form>
+      
+  </div>
+
+  <div class="back-btn">
+    <button onclick="window.location.href='/dashboard'">← Back to Dashboard</button>
+  </div>
+
+  <script>
+    document.getElementById("profileForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+      const data = {
+        emergencyContact: formData.get("emergencyContact")
+      };
+
+      const res = await fetch("/profile/update", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify(data)
+});
+
+
+      if (res.ok) {
+        alert("Profile updated successfully!");
+        window.location.href = "/dashboard";
+      } else {
+        alert("Failed to update profile.");
+      }
+    });
+  </script>
+</body>
+</html>
