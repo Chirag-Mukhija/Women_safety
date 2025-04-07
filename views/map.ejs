@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Live Location - SAFEHer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #1a5276;
+      --secondary-color: #2980b9;
+      --accent-color: #e74c3c;
+      --light-color: #f8f9fa;
+      --dark-color: #2c3e50;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-color);
+      color: #333;
+    }
+    
+    /* Header Styles */
+    .safety-header {
+      background-color: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 15px 0;
+    }
+    
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .logo {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 1.5rem;
+    }
+    
+    .logo i {
+      margin-right: 10px;
+    }
+    
+    .header-buttons .btn {
+      margin-left: 10px;
+      border-radius: 4px;
+      font-weight: 500;
+      padding: 8px 16px;
+    }
+    
+    /* Main Content */
+    .main-container {
+      max-width: 1000px;
+      margin: 30px auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      padding: 30px;
+    }
+    
+    /* Voice Detection Toggle */
+    .voice-toggle-container {
+      background: rgba(26, 82, 118, 0.05);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .toggle-label {
+      font-weight: 500;
+      color: var(--primary-color);
+      margin-right: 15px;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 24px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    /* Emergency Button - Centered below toggle */
+    .emergency-btn-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+    
+    .panic-btn {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .panic-btn:hover {
+      background-color: #c0392b;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(231, 76, 60, 0.4);
+    }
+    
+    .panic-btn:active {
+      transform: translateY(0);
+    }
+    
+    .panic-btn i {
+      margin-right: 8px;
+    }
+    
+    /* Safety Rating */
+    .safety-rating {
+      text-align: center;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 1.1rem;
+      background-color: rgba(41, 128, 185, 0.1);
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    /* Map Container */
+    .map-container {
+      margin: 25px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    }
+    
+    #map {
+      width: 100%;
+      height: 400px;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .header-container {
+        flex-direction: column;
+      }
+      
+      .header-buttons {
+        margin-top: 15px;
+      }
+      
+      .voice-toggle-container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .toggle-label {
+        margin-bottom: 10px;
+      }
+      
+      .panic-btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="safety-header">
+    <div class="header-container">
+      <div class="logo">
+        <i class="fas fa-shield-alt"></i>SAFEHer
+      </div>
+      <div class="header-buttons">
+        <a href="/profile" class="btn btn-outline-primary">My Profile</a>
+        <a href="/logout" class="btn btn-primary">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container main-container">
+    <!-- Voice Detection Toggle -->
+    <div class="voice-toggle-container">
+      <span class="toggle-label">Voice Detection Alert</span>
+      <label class="switch">
+        <input type="checkbox" id="voiceToggle" onchange="toggleVoiceControl()">
+        <span class="slider"></span>
+      </label>
+    </div>
+    
+    <!-- Emergency Button - Centered below toggle -->
+    <div class="emergency-btn-container">
+      <button onclick="sendPanic(this)" class="panic-btn">
+        <i class="fas fa-exclamation-triangle"></i> Emergency Alert
+      </button>
+    </div>
+    
+    <!-- Safety Rating -->
+    <div id="area-rating" class="safety-rating">Evaluating area safety...</div>
+    
+    <!-- Map -->
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <!-- JavaScript (Keep exactly the same) -->
+  <script>
+    let map, marker, lastPanic = 0;
+    const triggerWord = "help";
+    let recognition = null;
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 20.5937, lng: 78.9629 }, // Default to India's center
+        zoom: 15
+      });
+      
+      // Initial location load with retry
+      loadCurrentLocationWithRetry();
+      
+      // Set up intervals for location and evaluation
+      setInterval(loadCurrentLocation, 250000);
+    }
+
+    async function loadCurrentLocationWithRetry(retryCount = 0) {
+      try {
+        await loadCurrentLocation();
+        // After successful location load, trigger initial evaluation
+        setTimeout(() => {
+          evaluateLocation();
+          // Set up recurring evaluation
+          setInterval(evaluateLocation, 250000);
+        }, 2000);
+      } catch (e) {
+        if (retryCount < 3) {
+          setTimeout(() => loadCurrentLocationWithRetry(retryCount + 1), 3000);
+        }
+      }
+    }
+
+    async function loadCurrentLocation() {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const res = await fetch('/locations-data', { credentials: 'include' });
+          const locs = await res.json();
+          
+          if (!locs.length) {
+            // Use browser geolocation as fallback
+            navigator.geolocation.getCurrentPosition(
+              async pos => {
+                const { latitude, longitude } = pos.coords;
+                // Save location to server
+                await fetch('/location', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  credentials: 'include',
+                  body: JSON.stringify({ latitude, longitude })
+                });
+                
+                const fallbackPos = { lat: latitude, lng: longitude };
+                updateMapPosition(fallbackPos);
+                resolve();
+              },
+              error => {
+                console.error('Geolocation error:', error);
+                reject(error);
+              }
+            );
+          } else {
+            const { latitude, longitude } = locs[0];
+            updateMapPosition({ lat: latitude, lng: longitude });
+            resolve();
+          }
+        } catch (e) {
+          console.error('Error loading location:', e);
+          reject(e);
+        }
+      });
+    }
+
+    function updateMapPosition(pos) {
+      map.setCenter(pos);
+      if (marker) {
+        marker.setPosition(pos);
+      } else {
+        marker = new google.maps.Marker({
+          position: pos,
+          map: map,
+          title: 'Current Location'
+        });
+      }
+    }
+
+    async function evaluateLocation() {
+      try {
+        const locRes = await fetch('/locations-data', { credentials: 'include' });
+        const locs = await locRes.json();
+        if (!locs.length) {
+          console.log("No location data available for evaluation.");
+          document.getElementById('area-rating').textContent = "Location unavailable";
+          return;
+        }
+        const { latitude, longitude } = locs[0];
+        const evalRes = await fetch('/evaluate-location', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ latitude, longitude })
+        });
+        const evalData = await evalRes.json();
+
+        let rating = typeof evalData.rating !== 'undefined' ? Number(evalData.rating) : 3;
+        let judgement = typeof evalData.judgement !== 'undefined' ? evalData.judgement : "Okay Area";
+
+        const ratingEl = document.getElementById('area-rating');
+        ratingEl.textContent = `Area Safety Rating: ${rating}/5 - ${judgement}`;
+
+        ratingEl.style.backgroundColor = '';
+        const panicBtn = document.querySelector('.panic-btn');
+        
+        if (rating === 2) {
+          ratingEl.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+          ratingEl.style.borderLeftColor = 'red';
+          alert("Warning: The area is rated 2/5 - Unsafe Area. Please be cautious.");
+          alert("Multiple Warning: Significant risk indicators detected in this area.");
+        } else if (rating === 1) {
+          ratingEl.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+          ratingEl.style.borderLeftColor = 'darkred';
+          panicBtn.style.backgroundColor = 'red';
+          panicBtn.style.transform = 'scale(1.05)';
+          alert("Critical Warning: The area is rated 1/5 - Unsafe Area. This location is extremely dangerous!");
+          alert("Immediate Action Required: Use the panic button right away!");
+        } else if (rating <= 3) {
+          alert(`Warning: The area is rated ${rating}/5 (${judgement}). Please stay alert.`);
+        }
+      } catch (err) {
+        console.error('Evaluation error:', err);
+      }
+    }
+
+    async function sendPanic(button) {
+  const now = Date.now();
+  if (now - lastPanic < 35000) {
+    return alert('Only one panic alert every 35 seconds allowed.');
+  }
+  lastPanic = now;
+  if (button) button.disabled = true;
+
+  if (!navigator.geolocation) {
+    alert('Geolocation not supported');
+    if (button) button.disabled = false;
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude, longitude } = pos.coords;
+    const locationURL = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    const message = `Help me! My location is: ${locationURL}`;
+
+    try {
+      const panicRes = await fetch('/panic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ latitude, longitude })
+      });
+      const panicData = await panicRes.json();
+      alert(panicData.message || 'Panic alert sent!');
+
+      // Run Gemini evaluation immediately after sending the location
+      evaluateLocation();
+
+      const emergencyContact = '<%= user.emergencyContact %>';
+      const whatsappURL = `https://wa.me/91${emergencyContact}?text=${encodeURIComponent(message)}`;
+      window.open(whatsappURL, '_blank');
+
+      if (navigator.sms) {
+        navigator.sms.send(emergencyContact, message);
+      } else {
+        window.location.href = `sms:${emergencyContact}?body=${encodeURIComponent(message)}`;
+      }
+    } catch (err) {
+      console.error('Panic error:', err);
+      alert('Failed to send panic alert.');
+    } finally {
+      if (button) button.disabled = false;
+    }
+  }, () => {
+    alert('Please enable location services.');
+    if (button) button.disabled = false;
+  });
+}
+
+    function startVoicePanicDetection() {
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert("Your browser doesn't support voice recognition.");
+        return;
+      }
+      recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.onresult = function(event) {
+        const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+        console.log("Heard:", transcript);
+        if (transcript.includes(triggerWord)) {
+          alert("Voice trigger word detected!");
+          sendPanic(null);
+        }
+      };
+      recognition.onerror = function(event) {
+        console.error("Speech recognition error:", event.error);
+      };
+      recognition.onend = function() {
+        if (document.getElementById('voiceToggle')?.checked) {
+          recognition.start();
+        }
+      };
+      recognition.start();
+    }
+
+    function stopVoicePanicDetection() {
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+    }
+
+    function toggleVoiceControl() {
+      const enabled = document.getElementById("voiceToggle").checked;
+      if (enabled) {
+        startVoicePanicDetection();
+      } else {
+        stopVoicePanicDetection();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const voiceToggle = document.getElementById("voiceToggle");
+      voiceToggle.checked = false;
+      toggleVoiceControl();
+      setTimeout(() => {
+        if (!voiceToggle.checked) {
+          alert("For enhanced safety, please consider enabling voice detection using the toggle above.");
+        }
+      }, 7000);
+    });
+  </script>
+  
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrI9BCKW9G6l67-QUfVkLwywpLLA1hLcQ&callback=initMap" async defer></script>
+  <script src="/js/shake.js"></script>
+  <script>
+    const myShakeEvent = new Shake({
+      threshold: 15,
+      timeout: 1000
+    });
+  
+    myShakeEvent.start();
+  
+    window.addEventListener('shake', function () {
+      console.log("Shake detected!");
+      const panicButton = document.querySelector('.panic-btn');
+      sendPanic(panicButton);
+    }, false);
+  </script>
+
+</body>
+</html>
