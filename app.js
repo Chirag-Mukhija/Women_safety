@@ -208,50 +208,57 @@ app.get('/map', requireLogin, (req, res) => {
 // —————————————
 app.post('/evaluate-location', requireLogin, async (req, res) => {
   const { latitude, longitude } = req.body;
-  if (!latitude || !longitude)
-    return res.status(400).json({ message: 'Missing coords' });
+  if (!latitude || !longitude) {
+    return res.status(400).json({ 
+      rating: 3, 
+      judgement: "Okay Area",
+      message: "Default rating - location being processed"
+    });
+  }
     
-  // Instantiate the GoogleGenAI client using the API key from .env
   const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI_API_KEY });
   
-  // Construct a detailed prompt for Gemini
   const prompt = `
-Using past crime data, recent news headlines, National Crime Bureau records, and other public data, evaluate the safety of the location at latitude ${latitude} and longitude ${longitude}.
-Return exactly a JSON object with two keys:
-  "rating": an integer (1, 2, 3, 4, or 5) where 5 means extremely safe and 1 means extremely unsafe.
-  "judgement": a one-word value that must be exactly one of either "Safe Area" (if rating is 4 or 5), "Okay Area" (if rating is 3), or "Unsafe Area" (if rating is 1 or 2).
-If unable to decide, default to a rating of 3 and "Okay Area".
-Return only valid JSON without any extra text.
-  `.trim();
-  
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
-    });
+Analyze the safety level of the location at latitude ${latitude}, longitude ${longitude}.
+Consider:
+- Time of day
+- Population density
+- Recent crime statistics
+- Public transportation availability
+- Street lighting
+- Commercial activity
 
-    let result;
+Return a JSON object with:
+{
+  "rating": (integer 1-5, where 5 is safest),
+  "judgement": (exact string: "Safe Area" for 4-5, "Okay Area" for 3, "Unsafe Area" for 1-2)
+}
+`;
+
+  try {
+    const model = ai.getGenerativeModel({ model: "gemini-pro" });
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    
+    let parsedResult;
     try {
-      result = JSON.parse(response.text);
+      parsedResult = JSON.parse(response.text());
     } catch (err) {
-      console.error("Failed to parse AI response as JSON", err, response.text);
+      console.error("Gemini response parsing error:", err);
       return res.json({ rating: 3, judgement: "Okay Area" });
     }
     
-    const rating = Number(result.rating);
-    const validRatings = [1, 2, 3, 4, 5];
+    // Validate and sanitize the response
+    const rating = Math.max(1, Math.min(5, Number(parsedResult.rating) || 3));
     const validJudgements = ["Safe Area", "Okay Area", "Unsafe Area"];
+    const judgement = validJudgements.includes(parsedResult.judgement) 
+      ? parsedResult.judgement 
+      : "Okay Area";
     
-    if (!validRatings.includes(rating) || !validJudgements.includes(result.judgement)) {
-      result.rating = 3;
-      result.judgement = "Okay Area";
-    } else {
-      result.rating = rating;
-    }
-    
-    res.json(result);
+    res.json({ rating, judgement });
   } catch (e) {
     console.error("Gemini API error:", e);
+    // Provide a default response instead of failing
     res.json({ rating: 3, judgement: "Okay Area" });
   }
 });

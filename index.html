@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI for Women's Safety</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        header {
+            background-color: #e0f2fe;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            color: #1e3a8a;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            color: #374151;
+            margin-bottom: 20px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .hero-buttons button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .hero-buttons button.learn-more {
+            background-color: #60a5fa;
+            color: white;
+        }
+
+        .hero-buttons button.get-help {
+            background-color: #fca5a5;
+            color: black;
+        }
+
+        .hero-buttons button.explore-resources{
+            background-color: #a7f3d0;
+            color: black;
+        }
+
+        section {
+            padding: 40px 20px;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .feature {
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .feature img {
+            max-width: 100px;
+            margin-bottom: 10px;
+        }
+
+        footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .auth-links {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            cursor: pointer;
+        }
+        .auth-links a {
+            text-decoration: none;
+            color: #374151;
+        }
+
+        .auth-popup {
+            position: absolute;
+            top: 50px;
+            right: 20px;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .auth-popup.show {
+            display: flex;
+        }
+
+        .auth-popup button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #d1d5db;
+        }
+        .auth-popup button.register{
+            background-color: #3b82f6;
+            color: white;
+        }
+        .auth-popup button.login{
+            background-color: #8b5cf6;
+            color: white;
+        }
+        .links li a{
+            text-decoration: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Empowering Women, Ensuring Safety with AI</h1>
+        <p>Leveraging artificial intelligence to provide accessible and reliable safety tools and resources.</p>
+        <div class="hero-buttons">
+            <a href="#explore"><button class="explore-resources">Explore Resources</button></a>
+            <a href="#learnMore"><button class="learn-more">Learn More</button></a>
+            <button class="get-help">Get Help Now</button>
+        </div>
+    </header>
+
+    <div class="auth-links">
+        <a href="#" id="auth-toggle">Register / Login</a>
+        <a href="#about">About Us</a>
+        <a href="#contact">Contact Us</a>
+    </div>
+
+    <div class="auth-popup" id="auth-popup">
+        <button class="register">Register</button>
+        <button class="login">Login</button>
+    </div>
+
+    <section id="features">
+        <h2 class="section-title">Key Features</h2>
+        <div class="feature-grid">
+            <div class="feature">
+                <img src="images/realtime threat detection.webp" alt="Threat Detection">
+                <h3>Real-time Threat Detection</h3>
+                <p>AI analyzes data to identify potential dangers.</p>
+            </div>
+            <div class="feature">
+                <img src="images/emgergencyaert.image.jpeg" alt="Emergency Alerts">
+                <h3>Emergency Alerts</h3>
+                <p>Sends alerts to trusted contacts or authorities.</p>
+            </div>
+            <div class="feature">
+                <img src="images/saferoute.imsge.png" alt="Safe Route Planning">
+                <h3>Safe Route Planning</h3>
+                <p>Find secure routes based on safety data.</p>
+            </div>
+            <div class="feature">
+                <img src="images/cns new.image.png" alt="Community Support">
+                <h3>Community Support Networks</h3>
+                <p>Connects users with local support groups.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="about">
+        <h2 class="section-title">About Us</h2>
+        <p>We are SAFEHer, a dedicated team passionate about leveraging the power of Artificial Intelligence to create a safer world for women.</p>
+
+        <h3>Our Vision</h3>
+        <p>Our vision is simple yet profound: to ensure every woman feels safe, secure, and empowered in her daily life. We strive to build a future where technology is a vital tool for protection and peace of mind.</p>
+
+        <h3>Our Core Values</h3>
+        <p>At the heart of SAFEHer is a commitment to empowering women. We believe in providing resources and tools that not only protect but also foster independence and confidence. We are driven by empathy, innovation, and a relentless pursuit of safety.</p>
+
+        <h3>Our Story</h3>
+        <p>The inspiration behind SAFEHer stems from a growing concern about the increased incidents of harassment and safety threats faced by women. We recognized the urgent need for a proactive solution, one that could harness the capabilities of AI to provide real-time support and prevention. By integrating cutting-edge technology, we aim to offer a scalable and accessible safety net for women everywhere.</p>
+
+        <h3>Our Unique Approach</h3>
+        <p>SAFEHer is more than just an app or website; it's a community-driven platform. We are constantly evolving, integrating feedback from our users and experts to enhance our services. Our team is growing, bringing together diverse perspectives and skills to ensure we remain at the forefront of women's safety technology.</p>
+    </section>
+
+    <section id="explore">
+        <h2 class="section-title">Explore Resources</h2>
+        <p>Explore a variety of resources designed to empower and protect women.</p>
+        <ul class="links">
+            <li><a href="https://www.placer.ca.gov/8848/Violence-against-women-general-safety-ti">Personal Safety Guides</a></li>
+            <li><a href="https://nalsa.gov.in/services/legal-aid/legal-services">Legal Aid Information</a></li>
+            <li><a href="https://www.who.int/health-topics/mental-health">Mental Health Support</a></li>
+            <li><a href="https://www.youthservices.ap.gov.in/Train-SelfDef.html">Self-Defense Training</a></li>
+            <li><a href="https://www.cisa.gov/topics/cybersecurity-best-practices">Cyber Safety Tips</a></li>
+            <li><a href="https://womens-safety.com/womens-safety-faq/">FAQs</a></li>
+        </ul>
+    </section>
+
+    <section id="learnMore">
+        <h2 class="section-title">Learn More About AI Safety</h2>
+        <p>Dive deeper into the world of AI-driven safety solutions.</p>
+        <p>STAYFree with SAFEHer</p>
+        <ul class="links">
+            <li><a href="https://www.ericsson.com/en/blog/2024/1/four-benefits-of-ai-for-security-safety-and-transparency-in-telecom">How AI Enhances Personal Safety</a></li>
+            <li><a href="https://www.forbes.com/councils/forbestechcouncil/2024/12/16/the-future-of-ai-and-the-role-of-women-in-shaping-it/">The Future of AI in Women's Protection</a></li>
+            <li><a href="https://www.paloaltonetworks.com/cyberpedia/ai-in-threat-detection">Understanding AI Threat Detection</a></li>
+            <li><a href="https://www.captechu.edu/blog/ethical-considerations-of-artificial-intelligence">Ethical Considerations in AI Safety</a></li>
+            <li><a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC9058901/">AI and Community Support Networks</a></li>
+        </ul>
+    </section>
+
+    <section id="contact">
+        <h2 class="section-title">Contact Us</h2>
+        <p>Feel free to contact us.</p>
+        <p>Email:SAFEHerforall@gmail.com</p>
+        <p>Phone: +1 123 456 7890</p>
+    </section>
+
+    <footer>
+        <p>&copy; 2024 AI for Women's Safety. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const authToggle = document.getElementById('auth-toggle');
+        const authPopup = document.getElementById('auth-popup');
+
+        authToggle.addEventListener('click', () => {
+            authPopup.classList.toggle('show');
+        });
+    </script>
+</body>
+</html>
