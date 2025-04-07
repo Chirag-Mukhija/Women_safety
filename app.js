@@ -1,16 +1,23 @@
-
-const express = require('express');
-const mongoose = require('mongoose');
+const express    = require('express');
+const mongoose   = require('mongoose');
 const bodyParser = require('body-parser');
-const dotenv = require('dotenv');
-const path = require('path');
-const app = express();
-const Location = require('./models/location');
-const User = require('./models/user');
-const session = require('express-session');
-const bcrypt = require('bcrypt');
-app.use(express.json());
+const session    = require('express-session');
+const path       = require('path');
+const dotenv     = require('dotenv');
+const bcrypt     = require('bcrypt');
+const Location   = require('./models/location');
+const User       = require('./models/user');
 
+dotenv.config();
+const app = express();
+
+// —————————————
+// Middleware
+// —————————————
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('view engine', 'ejs');
 
 app.use(session({
   secret: 'yourSecretKey',
@@ -18,180 +25,153 @@ app.use(session({
   saveUninitialized: false
 }));
 
-dotenv.config();
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, 'public')));
-app.set('view engine', 'ejs');
-
-
-
-main().then(res=>{
-    console.log(`database connected !`)
+// —————————————
+// DB Connection
+// —————————————
+mongoose.connect('mongodb://127.0.0.1:27017/womensafety', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
 })
-.catch(err => console.log(err));
+.then(() => console.log('MongoDB connected!'))
+.catch(err => console.error(err));
 
-async function main() {
-  await mongoose.connect('mongodb://127.0.0.1:27017/womensafety');
+// —————————————
+// Auth Middleware
+// —————————————
+function requireLogin(req, res, next) {
+  if (!req.session.user) {
+    return req.session.destroy(() => res.redirect('/login'));
+  }
+  next();
 }
-app.listen(8080,()=>{
-  console.log(`listning to port 8080`)
-})
-app.get('/', (req, res) => {
-    res.render('index');
-});
-app.post('/panic', async (req, res) => {
-  try {
-    console.log('Session:', req.session);
 
-    const { latitude, longitude } = req.body;
-    const userId = req.session.user?._id;
+// —————————————
+// Routes
+// —————————————
 
-    if (!latitude || !longitude || !userId) {
-      return res.status(400).json({ message: 'Missing location or user info.' });
-    }
-
-    // ✅ Prevent duplicate panic alerts within 30 seconds
-    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000);
-    const recent = await Location.findOne({
-      userId,
-      timestamp: { $gte: thirtySecondsAgo }
-    });
-
-    if (recent) {
-      console.log('⛔ Duplicate panic alert blocked.');
-      return res.status(409).json({ message: 'Panic alert already sent recently.' });
-    }
-
-    const panicLocation = new Location({
-      latitude,
-      longitude,
-      userId
-    });
-
-    await panicLocation.save();
-
-    console.log('🚨 Panic location saved:', latitude, longitude);
-    res.json({ message: 'Panic alert sent and saved!' });
-  } catch (err) {
-    console.error('Error saving panic location:', err);
-    res.status(500).json({ message: 'Error sending panic alert.' });
-  }
-});
-
-
-
-
-app.post('/location', async (req, res) => {
-  console.log("Session at /location:", req.session); // 👈 ADD THIS
-
-  const { latitude, longitude } = req.body;
-  const userId = req.session.user?._id;
-
-  if (!userId) return res.status(401).json({ message: 'User not logged in' });
-
-  try {
-    const newLocation = new Location({ latitude, longitude, userId });
-    await newLocation.save();
-    res.json({ message: 'Location saved successfully!' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Failed to save location' });
-  }
-});
-
-
-
-app.get('/map', async (req, res) => {
-  const locations = await Location.find().sort({ timestamp: -1 }).limit(50);
-  res.render('map', { locations });
-});
-
-app.get('/locations-data', async (req, res) => {
-  try {
-    const locations = await Location.find()
-      .sort({ timestamp: -1 })
-      .limit(50)
-      .populate('userId', 'name email'); // 👈 this adds user info
-
-    res.json(locations);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch locations' });
-  }
-});
-
-
-// Render Signup Page
-app.get('/signup', (req, res) => {
-  res.render('signup');
-});
-
-// Handle Signup
+// Signup
+app.get('/signup', (req, res) => res.render('signup'));
 app.post('/signup', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, emergencyContact } = req.body;
   try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) return res.send('User already exists');
-
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
-
-    const newUser = new User({ name, email, password: hashedPassword });
-    await newUser.save();
-
-    req.session.user = newUser; // Still stores user in session
+    if (await User.findOne({ email })) return res.send('User already exists');
+    const hash = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name, email, password: hash, emergencyContact
+    });
+    req.session.user = user;
     res.redirect('/dashboard');
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     res.send('Signup failed');
   }
 });
 
-// Render Login Page
-app.get('/login', (req, res) => {
-  res.render('login');
-});
-
-// Handle Login
+// Login
+app.get('/login', (req, res) => res.render('login'));
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-
-    if (!user) return res.send('Invalid credentials');
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.send('Invalid credentials');
-
+    if (!user || !await bcrypt.compare(password, user.password))
+      return res.send('Invalid credentials');
     req.session.user = user;
     res.redirect('/dashboard');
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     res.send('Login failed');
   }
 });
 
-app.get('/dashboard', (req, res) => {
-  if (!req.session.user) return res.redirect('/login');
+// Logout
+app.get('/logout', (req, res) => {
+  req.session.destroy(() => res.redirect('/login'));
+});
+
+// Dashboard
+app.get('/dashboard', requireLogin, (req, res) => {
   res.render('dashboard', { user: req.session.user });
 });
 
-//logout route 
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.redirect('/login');
-  });
-});
-
-app.get('/map/:id', async (req, res) => {
-  const userId = req.params.id;
-
+// Profile (GET)
+app.get('/profile', requireLogin, async (req, res) => {
   try {
-    const locations = await Location.find({ userId }).sort({ timestamp: -1 }).limit(50);
-    res.render('map', { locations });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Failed to load map');
+    const user = await User.findById(req.session.user._id);
+    const justUpdated = req.query.updated === 'true';
+    res.render('profile', { user, justUpdated });
+  } catch (e) {
+    console.error(e);
+    res.redirect('/dashboard');
   }
 });
 
+// Profile (POST)
+app.post('/profile/update', requireLogin, async (req, res) => {
+  const { emergencyContact } = req.body;
+  try {
+    const updated = await User.findByIdAndUpdate(
+      req.session.user._id,
+      { emergencyContact },
+      { new: true }
+    );
+    req.session.user = updated;
+    res.status(200).json({ message: 'Profile updated' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Failed to update profile' });
+  }
+});
 
+// Save location
+app.post('/location', requireLogin, async (req, res) => {
+  const { latitude, longitude } = req.body;
+  const userId = req.session.user._id;
+  if (!latitude || !longitude)
+    return res.status(400).json({ message: 'Missing coords' });
+  try {
+    await Location.create({ latitude, longitude, userId });
+    res.json({ message: 'Location saved!' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Save failed' });
+  }
+});
+
+// Panic alert (save only)
+app.post('/panic', requireLogin, async (req, res) => {
+  const { latitude, longitude } = req.body;
+  const user = req.session.user;
+  if (!latitude || !longitude)
+    return res.status(400).json({ message: 'Missing coords' });
+  try {
+    await Location.create({ latitude, longitude, userId: user._id });
+    res.json({ message: 'Panic alert recorded!' });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: 'Panic save failed' });
+  }
+});
+
+// JSON for map
+app.get('/locations-data', requireLogin, async (req, res) => {
+  try {
+    const locations = await Location
+      .find({ userId: req.session.user._id })
+      .sort({ timestamp: -1 })
+      .limit(50);
+    res.json(locations);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Fetch failed' });
+  }
+});
+
+// Map page
+app.get('/map', requireLogin, (req, res) => {
+  res.render('map', { googleApiKey: process.env.GOOGLE_MAPS_KEY || 'AIzaSyBrI9BCKW9G6l67-QUfVkLwywpLLA1hLcQ' });
+});
+
+// Start server
+app.listen(process.env.PORT || 8080, () => {
+  console.log('Server listening on port 8080');
+});
