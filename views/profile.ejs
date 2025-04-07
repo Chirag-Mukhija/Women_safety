@@ -2,121 +2,223 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>My Profile</title>
+  <title>My Profile - SAFEHer</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      margin: 0;
-      padding: 0;
+    :root {
+      --primary-color: #1a5276;
+      --secondary-color: #2980b9;
+      --accent-color: #e74c3c;
+      --light-color: #f8f9fa;
+      --dark-color: #2c3e50;
     }
-
-    h1 {
-      text-align: center;
-      margin-top: 30px;
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--light-color);
       color: #333;
     }
-
-    .container {
-      background: white;
-      max-width: 500px;
+    
+    /* Header Styles */
+    .safety-header {
+      background-color: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 15px 0;
+    }
+    
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    .logo {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 1.5rem;
+    }
+    
+    .logo i {
+      margin-right: 10px;
+    }
+    
+    .header-buttons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .header-buttons .btn {
+      border-radius: 4px;
+      font-weight: 500;
+      padding: 8px 16px;
+      white-space: nowrap;
+    }
+    
+    /* Profile Container */
+    .profile-container {
+      max-width: 600px;
       margin: 40px auto;
-      padding: 30px;
+      background: white;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+      padding: 30px;
+      border: 1px solid rgba(0,0,0,0.05);
     }
-
-    label {
-      display: block;
-      margin-top: 15px;
-      margin-bottom: 5px;
-      color: #444;
-      font-weight: bold;
+    
+    .profile-title {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+      font-weight: 700;
+      position: relative;
+      padding-bottom: 10px;
     }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-      background-color: #f5f5f5;
+    
+    .profile-title:after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 50px;
+      height: 3px;
+      background-color: var(--primary-color);
+      transform: translateX(-50%);
     }
-
-    input[readonly] {
-      background-color: #e8e8e8;
-      color: #555;
+    
+    .form-label {
+      font-weight: 500;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+    
+    .form-control {
+      height: 45px;
+      border-radius: 4px;
+      border: 1px solid #e1e1e1;
+      padding-left: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 0.25rem rgba(26, 82, 118, 0.1);
+    }
+    
+    .form-control[readonly] {
+      background-color: #f8f9fa;
+      color: #6c757d;
       cursor: not-allowed;
     }
-
-    .btn-container {
-      text-align: center;
-      margin-top: 25px;
+    
+    .btn-primary {
+      background-color: var(--primary-color);
+      border-color: var(--primary-color);
+      padding: 10px 25px;
+      font-weight: 500;
+      border-radius: 4px;
+      width: 100%;
     }
-
-    .btn {
-      padding: 10px 20px;
-      background-color: #007bff;
-      border: none;
-      color: white;
-      font-size: 16px;
-      border-radius: 6px;
-      cursor: pointer;
+    
+    .btn-primary:hover {
+      background-color: var(--secondary-color);
+      border-color: var(--secondary-color);
     }
-
-    .btn:hover {
-      background-color: #0056b3;
-    }
-
+    
     .back-btn {
-      display: block;
-      margin: 20px auto 0;
       text-align: center;
+      margin-top: 20px;
     }
-
-    .back-btn button {
-      background: #6c757d;
-      color: white;
-      padding: 8px 18px;
-      font-size: 15px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
+    
+    .back-btn .btn {
+      background-color: #6c757d;
+      border-color: #6c757d;
+      padding: 8px 20px;
+      font-weight: 500;
     }
-
-    .back-btn button:hover {
-      background: #5a6268;
+    
+    .back-btn .btn:hover {
+      background-color: #5a6268;
+      border-color: #5a6268;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+      .profile-container {
+        margin: 20px;
+        padding: 20px;
+      }
+      
+      .header-container {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .header-buttons {
+        width: 100%;
+        justify-content: flex-end;
+      }
     }
   </style>
 </head>
 <body>
-
-  <h1>My Profile</h1>
-
-  <div class="container">
-    <form id="profileForm">
-      <label for="name">Name</label>
-      <input type="text" name="name" id="name" value="<%= user.name %>" readonly>
-    
-      <label for="email">Email</label>
-      <input type="email" name="email" id="email" value="<%= user.email %>" readonly>
-    
-      <label for="emergencyContact">Emergency Contact</label>
-      <input type="text" name="emergencyContact" id="emergencyContact" value="<%= user.emergencyContact || '' %>" required>
-
-      <label for="emergencyEmail">Emergency Email</label>
-      <input type="email" name="emergencyEmail" id="emergencyEmail" value="<%= user.emergencyEmail || '' %>" required>
-    
-      <div class="btn-container">
-        <button type="submit" class="btn">Update Profile</button>
+  <!-- Header with properly aligned buttons -->
+  <header class="safety-header">
+    <div class="header-container">
+      <div class="logo">
+        <i class="fas fa-shield-alt"></i>SAFEHer
       </div>
+      <div class="header-buttons">
+        <a href="/home" class="btn btn-outline-primary">
+          <i class="fas fa-home"></i> Home
+        </a>
+        <a href="/logout" class="btn btn-primary">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Profile Form -->
+  <div class="profile-container">
+    <h1 class="profile-title">My Profile</h1>
+    
+    <form id="profileForm">
+      <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" class="form-control" name="name" id="name" value="<%= user.name %>" readonly>
+      </div>
+      
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" name="email" id="email" value="<%= user.email %>" readonly>
+      </div>
+      
+      <div class="mb-3">
+        <label for="emergencyContact" class="form-label">Emergency Contact</label>
+        <input type="text" class="form-control" name="emergencyContact" id="emergencyContact" 
+               value="<%= user.emergencyContact || '' %>" required>
+      </div>
+      
+      <div class="mb-3">
+        <label for="emergencyEmail" class="form-label">Emergency Email</label>
+        <input type="email" class="form-control" name="emergencyEmail" id="emergencyEmail" 
+               value="<%= user.emergencyEmail || '' %>" required>
+      </div>
+      
+      <button type="submit" class="btn btn-primary">Update Profile</button>
     </form>
+    
+    
   </div>
 
-  <div class="back-btn">
-    <button onclick="window.location.href='/dashboard'">← Back to Dashboard</button>
-  </div>
-
+  <!-- JavaScript (Functionality remains exactly the same) -->
   <script>
     document.getElementById("profileForm").addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -143,5 +245,8 @@
       }
     });
   </script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
