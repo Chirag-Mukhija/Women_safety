@@ -34,16 +34,80 @@
     .back-link:hover {
       text-decoration: underline;
     }
+
+    /* Slider Styles */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
   </style>
 </head>
 <body>
   <a href="/dashboard" class="back-link">← Back to Dashboard</a>
   <h1>Current Location</h1>
+
+  <div class="toggle-container">
+    <label>Voice Panic Alert</label>
+    <label class="switch">
+      <input type="checkbox" id="voiceToggle" onchange="toggleVoiceControl()" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
   <button onclick="sendPanic(this)" class="panic-btn">🚨 Send Panic Alert</button>
   <div id="map"></div>
 
   <script>
     let map, marker, lastPanic = 0;
+    const triggerWord = "help";
+    let recognition = null;
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
@@ -84,18 +148,18 @@
         return alert('Only one panic alert every 35 seconds allowed.');
       }
       lastPanic = now;
-      button.disabled = true;
+      if (button) button.disabled = true;
 
       if (!navigator.geolocation) {
         alert('Geolocation not supported');
-        button.disabled = false;
+        if (button) button.disabled = false;
         return;
       }
 
       navigator.geolocation.getCurrentPosition(async pos => {
         const { latitude, longitude } = pos.coords;
         const locationURL = `https://www.google.com/maps?q=${latitude},${longitude}`;
-        const message = `Help me ! My location is: ${locationURL}`;
+        const message = `Help me! My location is: ${locationURL}`;
 
         try {
           const panicRes = await fetch('/panic', {
@@ -107,18 +171,13 @@
           const panicData = await panicRes.json();
           alert(panicData.message || 'Panic alert sent!');
 
-          // Fetch emergency contact from backend or embed it server-side
-          const emergencyContact = '<%= user.emergencyContact %>'; // Assumes server renders this variable
-
-          // Trigger WhatsApp message
+          const emergencyContact = '<%= user.emergencyContact %>';
           const whatsappURL = `https://wa.me/91${emergencyContact}?text=${encodeURIComponent(message)}`;
           window.open(whatsappURL, '_blank');
 
-          // Send SMS using device
           if (navigator.sms) {
             navigator.sms.send(emergencyContact, message);
           } else {
-            // Try to open default SMS app as fallback
             window.location.href = `sms:${emergencyContact}?body=${encodeURIComponent(message)}`;
           }
 
@@ -127,13 +186,68 @@
           console.error('Panic error:', err);
           alert('Failed to send panic alert.');
         } finally {
-          button.disabled = false;
+          if (button) button.disabled = false;
         }
       }, () => {
         alert('Please enable location services.');
-        button.disabled = false;
+        if (button) button.disabled = false;
       });
     }
+
+    function startVoicePanicDetection() {
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert("Your browser doesn't support voice recognition.");
+        return;
+      }
+
+      recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-US';
+      recognition.continuous = true;
+      recognition.interimResults = false;
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[event.results.length - 1][0].transcript.trim().toLowerCase();
+        console.log("Heard:", transcript);
+
+        if (transcript.includes(triggerWord)) {
+          alert("Voice trigger word detected!");
+          sendPanic(null);
+        }
+      };
+
+      recognition.onerror = function(event) {
+        console.error("Speech recognition error:", event.error);
+      };
+
+      recognition.onend = function() {
+        if (document.getElementById('voiceToggle')?.checked) {
+          recognition.start(); // auto-restart
+        }
+      };
+
+      recognition.start();
+    }
+
+    function stopVoicePanicDetection() {
+      if (recognition) {
+        recognition.stop();
+        recognition = null;
+      }
+    }
+
+    function toggleVoiceControl() {
+      const enabled = document.getElementById("voiceToggle").checked;
+      if (enabled) {
+        startVoicePanicDetection();
+      } else {
+        stopVoicePanicDetection();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("voiceToggle").checked = true;
+      toggleVoiceControl();
+    });
   </script>
 
   <script
@@ -142,4 +256,3 @@
   </script>
 </body>
 </html>
- 
