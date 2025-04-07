@@ -1,0 +1,48 @@
+{
+  "packageId": "com.sfe.her",
+  "host": "starfish-proper-briefly.ngrok-free.app",
+  "name": "AI for Women's Safety",
+  "launcherName": "SAFEHer",
+  "display": "standalone",
+  "themeColor": "#007BFF",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#FFFFFF",
+  "enableNotifications": true,
+  "startUrl": "home",
+  "iconUrl": "https://raw.githubusercontent.com/Chirag-Mukhija/Women_safety/refs/heads/main/images/icon-512.png",
+  "maskableIconUrl": "https://raw.githubusercontent.com/Chirag-Mukhija/Women_safety/refs/heads/main/images/icon-192.png",
+  "monochromeIconUrl": "https://raw.githubusercontent.com/Chirag-Mukhija/Women_safety/refs/heads/main/images/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "C:\\Users\\Divyansh\\Desktop\\Women_safety\\android.keystore",
+    "alias": "divyapps"
+  },
+  "appVersionName": "1",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://raw.githubusercontent.com/Chirag-Mukhija/Women_safety/refs/heads/main/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://raw.githubusercontent.com/Chirag-Mukhija/Women_safety/refs/heads/main/",
+  "minSdkVersion": 21,
+  "orientation": "default",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersion": "1"
+}
