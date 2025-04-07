@@ -91,17 +91,37 @@
         button.disabled = false;
         return;
       }
+
       navigator.geolocation.getCurrentPosition(async pos => {
+        const { latitude, longitude } = pos.coords;
+        const locationURL = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        const message = `Help me ! My location is: ${locationURL}`;
+
         try {
-          const { latitude, longitude } = pos.coords;
-          const response = await fetch('/panic', {
+          const panicRes = await fetch('/panic', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
             body: JSON.stringify({ latitude, longitude })
           });
-          const data = await response.json();
-          alert(data.message || 'Panic alert sent!');
+          const panicData = await panicRes.json();
+          alert(panicData.message || 'Panic alert sent!');
+
+          // Fetch emergency contact from backend or embed it server-side
+          const emergencyContact = '<%= user.emergencyContact %>'; // Assumes server renders this variable
+
+          // Trigger WhatsApp message
+          const whatsappURL = `https://wa.me/${emergencyContact}?text=${encodeURIComponent(message)}`;
+          window.open(whatsappURL, '_blank');
+
+          // Send SMS using device
+          if (navigator.sms) {
+            navigator.sms.send(emergencyContact, message);
+          } else {
+            // Try to open default SMS app as fallback
+            window.location.href = `sms:${emergencyContact}?body=${encodeURIComponent(message)}`;
+          }
+
           loadCurrentLocation();
         } catch (err) {
           console.error('Panic error:', err);
@@ -122,3 +142,4 @@
   </script>
 </body>
 </html>
+ 
