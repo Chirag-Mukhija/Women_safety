@@ -298,3 +298,4 @@ app.get('/home', (req, res) => {
 app.get('/how-it-works', (req, res) => {
   res.render('how-it-works.ejs');
 })
+
