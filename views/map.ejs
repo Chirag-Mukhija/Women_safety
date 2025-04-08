@@ -341,6 +341,20 @@
       font-weight: 600;
       color: var(--primary-color);
     }
+
+    .safety-rank {
+      background: var(--primary-color);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .route-option i.fa-car {
+      color: var(--primary-color);
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
@@ -731,70 +745,126 @@
 }
 
     async function analyzeSafetyForRoutes(routes) {
-      const hour = new Date().getHours();
-      const isDaytime = hour >= 6 && hour <= 18;
+  try {
+    const hour = new Date().getHours();
+    const mainRoute = routes[0]; // Get the recommended route
+    
+    // Prepare route data for analysis
+    const routeData = {
+      start: mainRoute.legs[0].start_location.toJSON(),
+      end: mainRoute.legs[0].end_location.toJSON(),
+      distance: mainRoute.legs[0].distance.text,
+      duration: mainRoute.legs[0].duration.text,
+      time: hour,
+      isDaytime: hour >= 6 && hour <= 18
+    };
 
-      return {
-        safetyAnalysis: {
-          overallSafety: 8.5,
-          lighting: isDaytime ? 9 : 6.5,
-          crowding: isDaytime ? 8 : 5.5,
-          policeProximity: 7.5
-        },
-        routes: routes.map((route, index) => ({
-          index: index,
-          name: index === 0 ? 'Most Recommended Route' : `Alternative Route ${index + 1}`,
-          rank: index + 1,
-          distance: route.legs[0].distance.text,
-          duration: route.legs[0].duration.text,
-          safety: `Rank ${index + 1}`
-        }))
-      };
+    // Request safety analysis from backend
+    const response = await fetch('/analyze-route-safety', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(routeData)
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to analyze route safety');
     }
+
+    const safetyData = await response.json();
+
+    return {
+      safetyAnalysis: {
+        overallSafety: safetyData.overallSafety,
+        lighting: safetyData.lighting,
+        crowding: safetyData.crowding,
+        policeProximity: safetyData.policeProximity
+      },
+      routes: routes.map((route, index) => ({
+        index: index,
+        name: index === 0 ? 'Most Recommended Route' : `Alternative Route ${index + 1}`,
+        rank: index + 1,
+        distance: route.legs[0].distance.text,
+        duration: route.legs[0].duration.text,
+        safety: `Rank ${index + 1}`,
+        safetyScore: index === 0 ? safetyData.overallSafety : (safetyData.overallSafety - (index * 0.5)).toFixed(1)
+      }))
+    };
+  } catch (error) {
+    console.error('Safety analysis error:', error);
+    // Fallback to basic analysis if Gemini fails
+    return defaultSafetyAnalysis(routes);
+  }
+}
 
     function displayRouteAnalysis(data) {
-      const analysisDiv = document.getElementById('routeAnalysis');
-      const metricsDiv = document.getElementById('safetyMetrics');
-      const routesDiv = document.getElementById('alternativeRoutes');
+  const analysisDiv = document.getElementById('routeAnalysis');
+  const metricsDiv = document.getElementById('safetyMetrics');
+  const routesDiv = document.getElementById('alternativeRoutes');
 
-      metricsDiv.innerHTML = `
-        <div class="safety-metric">
-          <i class="fas fa-shield-alt"></i>
-          <div>Overall Safety</div>
-          <strong>Rank 1</strong>
-        </div>
-        <div class="safety-metric">
-          <i class="fas fa-lightbulb"></i>
-          <div>Street Lighting</div>
-          <strong>${data.safetyAnalysis.lighting}/10</strong>
-        </div>
-        <div class="safety-metric">
-          <i class="fas fa-users"></i>
-          <div>Crowd Density</div>
-          <strong>${data.safetyAnalysis.crowding}/10</strong>
-        </div>
-        <div class="safety-metric">
-          <i class="fas fa-building-shield"></i>
-          <div>Police Proximity</div>
-          <strong>${data.safetyAnalysis.policeProximity}/10</strong>
-        </div>
-      `;
+  metricsDiv.innerHTML = `
+    <div class="safety-metric">
+      <i class="fas fa-shield-alt"></i>
+      <div>Overall Safety</div>
+      <strong>${data.safetyAnalysis.overallSafety}/10</strong>
+    </div>
+    <div class="safety-metric">
+      <i class="fas fa-lightbulb"></i>
+      <div>Street Lighting</div>
+      <strong>${data.safetyAnalysis.lighting}/10</strong>
+    </div>
+    <div class="safety-metric">
+      <i class="fas fa-users"></i>
+      <div>Crowd Density</div>
+      <strong>${data.safetyAnalysis.crowding}/10</strong>
+    </div>
+    <div class="safety-metric">
+      <i class="fas fa-building-shield"></i>
+      <div>Police Proximity</div>
+      <strong>${data.safetyAnalysis.policeProximity}/10</strong>
+    </div>
+  `;
 
-      routesDiv.innerHTML = data.routes.map(route => `
-        <div class="route-option" onclick="selectRoute(${route.index})">
-          <div class="route-header">
-            <h5><i class="fas fa-car"></i> ${route.name}</h5>
-            <span class="safety-rank">Safety: ${route.safety}</span>
-          </div>
-          <div class="route-details">
-            <span><i class="fas fa-clock"></i> Drive time: ${route.duration}</span>
-            <span><i class="fas fa-road"></i> ${route.distance}</span>
-          </div>
-        </div>
-      `).join('');
+  routesDiv.innerHTML = data.routes.map(route => `
+    <div class="route-option" onclick="selectRoute(${route.index})">
+      <div class="route-header">
+        <h5><i class="fas fa-car"></i> ${route.name}</h5>
+        <span class="safety-rank">Safety: ${route.safety}</span>
+      </div>
+      <div class="route-details">
+        <span><i class="fas fa-clock"></i> Drive time: ${route.duration}</span>
+        <span><i class="fas fa-road"></i> ${route.distance}</span>
+      </div>
+    </div>
+  `).join('');
 
-      analysisDiv.style.display = 'block';
-    }
+  analysisDiv.style.display = 'block';
+}
+
+    // Add this helper function after analyzeSafetyForRoutes
+
+function defaultSafetyAnalysis(routes) {
+  const hour = new Date().getHours();
+  const isDaytime = hour >= 6 && hour <= 18;
+  
+  return {
+    safetyAnalysis: {
+      overallSafety: 7.5,
+      lighting: isDaytime ? 8.5 : 6.5,
+      crowding: isDaytime ? 8.0 : 5.5,
+      policeProximity: 7.0
+    },
+    routes: routes.map((route, index) => ({
+      index: index,
+      name: index === 0 ? 'Most Recommended Route' : `Alternative Route ${index + 1}`,
+      rank: index + 1,
+      distance: route.legs[0].distance.text,
+      duration: route.legs[0].duration.text,
+      safety: `Rank ${index + 1}`
+    }))
+  };
+}
   </script>
   
   <script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_KEY %>&libraries=places&callback=initMap" async defer></script>
