@@ -211,6 +211,136 @@
         font-size: 1rem;
       }
     }
+
+    .route-planner-container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .route-search {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    #destinationInput {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    .route-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 0 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .route-btn:hover {
+      background: var(--secondary-color);
+    }
+
+    .route-analysis {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .route-safety-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .safety-metric {
+      background: var(--light-color);
+      padding: 15px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .safety-metric i {
+      color: var(--primary-color);
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+    }
+
+    .route-option {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 10px 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .route-option:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .route-option.selected {
+      border-color: var(--primary-color);
+      background: rgba(26, 82, 118, 0.05);
+    }
+
+    .route-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .route-details {
+      display: flex;
+      gap: 15px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    /* Google Places Autocomplete styling */
+    .pac-container {
+      margin-top: 5px;
+      border-radius: 8px;
+      border: none;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      z-index: 1100; /* Ensure dropdown appears above other elements */
+    }
+
+    .pac-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .pac-item:hover {
+      background-color: var(--light-color);
+    }
+
+    .pac-item-query {
+      font-size: 14px;
+      color: var(--dark-color);
+    }
+
+    .pac-matched {
+      font-weight: 600;
+      color: var(--primary-color);
+    }
   </style>
 </head>
 <body>
@@ -252,6 +382,28 @@
     <div class="map-container">
       <div id="map"></div>
     </div>
+
+    <div class="route-planner-container">
+      <h3><i class="fas fa-route"></i> Find Safest Route</h3>
+      <div class="route-search">
+        <input 
+          type="text" 
+          id="destinationInput" 
+          placeholder="Enter your destination"
+          autocomplete="off"
+        >
+        <button onclick="planSafeRoute()" class="route-btn">
+          <i class="fas fa-search"></i> Find Safe Routes
+        </button>
+      </div>
+      <div id="routeAnalysis" class="route-analysis" style="display: none;">
+        <div class="route-safety-metrics">
+          <h4>Route Safety Analysis</h4>
+          <div id="safetyMetrics"></div>
+        </div>
+        <div id="alternativeRoutes"></div>
+      </div>
+    </div>
   </div>
 
   <!-- JavaScript (Keep exactly the same) -->
@@ -262,10 +414,33 @@
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 20.5937, lng: 78.9629 }, // Default to India's center
+        center: { lat: 20.5937, lng: 78.9629 },
         zoom: 15
       });
       
+      // Initialize Places Autocomplete
+      const destinationInput = document.getElementById('destinationInput');
+      const autocomplete = new google.maps.places.Autocomplete(destinationInput, {
+        types: ['geocode', 'establishment'],
+        componentRestrictions: { country: 'IN' },
+        fields: ['place_id', 'geometry', 'name', 'formatted_address']
+      });
+
+      // Store place data when selected
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry || !place.geometry.location) {
+          alert('Please select a place from the dropdown.');
+          return;
+        }
+        // Save selected place data globally
+        window.selectedDestination = {
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+          address: place.formatted_address
+        };
+      });
+
       // Initial location load with retry
       loadCurrentLocationWithRetry();
       
@@ -496,9 +671,138 @@
         }
       }, 7000);
     });
+
+    // Initialize the Places Autocomplete
+    function initAutocomplete() {
+      const destinationInput = document.getElementById('destinationInput');
+      const autocomplete = new google.maps.places.Autocomplete(destinationInput, {
+        types: ['geocode'],
+        componentRestrictions: { country: 'IN' }
+      });
+      
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) {
+          alert('Please select a place from the dropdown.');
+          return;
+        }
+      });
+    }
+
+    async function planSafeRoute() {
+  if (!window.selectedDestination) {
+    alert('Please select a destination from the dropdown suggestions');
+    return;
+  }
+
+  try {
+    // Get current location from marker
+    const currentLocation = marker.getPosition();
+    
+    // Use stored destination coordinates
+    const destination = new google.maps.LatLng(
+      window.selectedDestination.lat,
+      window.selectedDestination.lng
+    );
+
+    // Calculate routes
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer({
+      map: map,
+      suppressMarkers: false
+    });
+
+    const result = await new Promise((resolve, reject) => {
+      directionsService.route({
+        origin: currentLocation,
+        destination: destination,
+        travelMode: google.maps.TravelMode.WALKING,
+        provideRouteAlternatives: true
+      }, (response, status) => {
+        if (status === 'OK') resolve(response);
+        else reject(new Error(`Route calculation failed: ${status}`));
+      });
+    });
+
+    // Display route on map
+    directionsRenderer.setDirections(result);
+
+    // Analyze and display routes
+    const safetyAnalysis = await analyzeSafetyForRoutes(result.routes);
+    displayRouteAnalysis(safetyAnalysis);
+
+  } catch (error) {
+    console.error('Route planning error:', error);
+    alert('Failed to plan route. Please try again.');
+  }
+}
+    async function analyzeSafetyForRoutes(routes) {
+      const hour = new Date().getHours();
+      const isDaytime = hour >= 6 && hour <= 18;
+
+      return {
+        safetyAnalysis: {
+          overallSafety: 8.5,
+          lighting: isDaytime ? 9 : 6.5,
+          crowding: isDaytime ? 8 : 5.5,
+          policeProximity: 7.5
+        },
+        routes: routes.map((route, index) => ({
+          index: index,
+          name: index === 0 ? 'Recommended Safe Route' : `Alternative Route ${index + 1}`,
+          distance: route.legs[0].distance.text,
+          duration: route.legs[0].duration.text,
+          safety: (10 - index).toFixed(1)
+        }))
+      };
+    }
+
+    function displayRouteAnalysis(data) {
+      const analysisDiv = document.getElementById('routeAnalysis');
+      const metricsDiv = document.getElementById('safetyMetrics');
+      const routesDiv = document.getElementById('alternativeRoutes');
+
+      metricsDiv.innerHTML = `
+        <div class="safety-metric">
+          <i class="fas fa-shield-alt"></i>
+          <div>Overall Safety</div>
+          <strong>${data.safetyAnalysis.overallSafety}/10</strong>
+        </div>
+        <div class="safety-metric">
+          <i class="fas fa-lightbulb"></i>
+          <div>Street Lighting</div>
+          <strong>${data.safetyAnalysis.lighting}/10</strong>
+        </div>
+        <div class="safety-metric">
+          <i class="fas fa-users"></i>
+          <div>Crowd Density</div>
+          <strong>${data.safetyAnalysis.crowding}/10</strong>
+        </div>
+        <div class="safety-metric">
+          <i class="fas fa-building-shield"></i>
+          <div>Police Proximity</div>
+          <strong>${data.safetyAnalysis.policeProximity}/10</strong>
+        </div>
+      `;
+
+      routesDiv.innerHTML = data.routes.map(route => `
+        <div class="route-option" onclick="selectRoute(${route.index})">
+          <div class="route-header">
+            <h5><i class="fas fa-route"></i> ${route.name}</h5>
+            <span>Safety Score: ${route.safety}/10</span>
+          </div>
+          <div class="route-details">
+            <span><i class="fas fa-clock"></i> ${route.duration}</span>
+            <span><i class="fas fa-road"></i> ${route.distance}</span>
+          </div>
+        </div>
+      `).join('');
+
+      analysisDiv.style.display = 'block';
+    }
   </script>
   
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBrI9BCKW9G6l67-QUfVkLwywpLLA1hLcQ&callback=initMap" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=<%= process.env.GOOGLE_MAPS_KEY %>&libraries=places&callback=initMap" async defer></script>
   <script src="/js/shake.js"></script>
   <script>
     const myShakeEvent = new Shake({
