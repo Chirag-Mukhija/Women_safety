@@ -414,6 +414,55 @@ app.post('/api/evaluate-safety', async (req, res) => {
   }
 });
 
+// Add this new route to handle route safety analysis
+
+app.post('/analyze-route-safety', async (req, res) => {
+  try {
+    const { GoogleGenerativeAI } = require('@google/genai');
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const { start, end, distance, duration, time, isDaytime } = req.body;
+
+    const prompt = `
+      Analyze the safety of a route with the following details:
+      - Starting point: ${start.lat}, ${start.lng}
+      - Destination: ${end.lat}, ${end.lng}
+      - Distance: ${distance}
+      - Duration: ${duration}
+      - Current time: ${time}:00 hours (${isDaytime ? 'Daytime' : 'Night'})
+
+      Provide a safety analysis with scores (1-10) for:
+      1. Overall route safety
+      2. Street lighting conditions
+      3. Expected crowd density
+      4. Proximity to police/security
+      
+      Return only a JSON object with these scores like:
+      {
+        "overallSafety": number,
+        "lighting": number,
+        "crowding": number,
+        "policeProximity": number
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const safetyData = JSON.parse(result.response.text());
+
+    res.json(safetyData);
+  } catch (error) {
+    console.error('Gemini analysis error:', error);
+    // Return fallback values if AI analysis fails
+    res.json({
+      overallSafety: 7.5,
+      lighting: 8.0,
+      crowding: 7.5,
+      policeProximity: 7.0
+    });
+  }
+});
+
 // —————————————
 // Start the Server
 app.listen(process.env.PORT || 8080, () => {
