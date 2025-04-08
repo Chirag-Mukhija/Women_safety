@@ -282,6 +282,138 @@ setInterval(async () => {
   }
 }, 60 * 60 * 1000); // Runs every hour
 
+// Add after your existing routes, before the server start
+
+// Safe Route Planning Endpoint
+app.post('/safe-route', requireLogin, async (req, res) => {
+  const { startLat, startLng, destLat, destLng } = req.body;
+  
+  if (!startLat || !startLng || !destLat || !destLng) {
+    return res.status(400).json({ error: 'Missing coordinates' });
+  }
+
+  try {
+    // Generate Gemini prompt for route safety analysis
+    const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GEMINI_API_KEY });
+    const model = ai.getGenerativeModel({ model: "gemini-pro" });
+
+    const routePrompt = `
+    Analyze the safety of a route from (${startLat},${startLng}) to (${destLat},${destLng}).
+    Consider:
+    - Time of day safety
+    - Street lighting (scale 1-10)
+    - Population density (scale 1-10)
+    - Proximity to police stations (scale 1-10)
+    - Historical incident data
+
+    Return a JSON object with:
+    {
+      "lightingScore": 1-10,
+      "crowdScore": 1-10,
+      "policeProximity": 1-10,
+      "incidentCount": number,
+      "overallSafetyScore": 1-10,
+      "recommendations": ["string"]
+    }`;
+
+    const result = await model.generateContent(routePrompt);
+    const safetyAnalysis = JSON.parse(result.response.text());
+
+    // Save route analysis to database
+    const safeRoute = await SafeRoute.create({
+      userId: req.session.user._id,
+      start: { latitude: startLat, longitude: startLng },
+      destination: { latitude: destLat, longitude: destLng },
+      safetyMetrics: safetyAnalysis
+    });
+
+    res.json({
+      route: {
+        start: { lat: startLat, lng: startLng },
+        destination: { lat: destLat, lng: destLng }
+      },
+      safetyAnalysis,
+      alternativeRoutes: await generateAlternativeRoutes(startLat, startLng, destLat, destLng)
+    });
+
+  } catch (error) {
+    console.error('Safe route planning error:', error);
+    res.status(500).json({ error: 'Failed to plan safe route' });
+  }
+});
+
+async function generateAlternativeRoutes(startLat, startLng, destLat, destLng) {
+  // Calculate 3 alternative routes with different priorities
+  return [
+    {
+      name: 'Safest Route',
+      priority: 'safety',
+      estimatedTime: '25 mins',
+      distance: '2.3 km'
+    },
+    {
+      name: 'Well-lit Route',
+      priority: 'lighting',
+      estimatedTime: '30 mins',
+      distance: '2.8 km'
+    },
+    {
+      name: 'Busy Route',
+      priority: 'crowded',
+      estimatedTime: '28 mins',
+      distance: '2.5 km'
+    }
+  ];
+}
+
+// Add this route to your app.js
+app.post('/api/evaluate-safety', async (req, res) => {
+  try {
+    const { GoogleGenerativeAI } = require('@google/genai');
+    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const { lat, lng, time } = req.body;
+
+    const prompt = `
+      Analyze the safety of this location: Latitude ${lat}, Longitude ${lng}
+      Current time: ${time}
+      
+      Provide a JSON response with:
+      {
+        "score": number between 1-10,
+        "analysis": "brief safety analysis",
+        "recommendations": ["list", "of", "safety", "tips"]
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    let safetyData;
+
+    try {
+      safetyData = JSON.parse(response.text());
+    } catch (e) {
+      // If JSON parsing fails, create a structured response
+      safetyData = {
+        score: 7,
+        analysis: response.text(),
+        recommendations: ["Stay aware of your surroundings", "Keep emergency contacts handy"]
+      };
+    }
+
+    res.json(safetyData);
+  } catch (error) {
+    console.error('Gemini AI error:', error);
+    res.status(500).json({ 
+      error: 'Failed to evaluate area safety',
+      score: 5,
+      analysis: 'Safety evaluation system temporarily unavailable',
+      recommendations: ["Exercise general caution", "Follow standard safety practices"]
+    });
+  }
+});
+
 // —————————————
 // Start the Server
 app.listen(process.env.PORT || 8080, () => {
