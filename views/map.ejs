@@ -696,16 +696,12 @@
   }
 
   try {
-    // Get current location from marker
     const currentLocation = marker.getPosition();
-    
-    // Use stored destination coordinates
     const destination = new google.maps.LatLng(
       window.selectedDestination.lat,
       window.selectedDestination.lng
     );
 
-    // Calculate routes
     const directionsService = new google.maps.DirectionsService();
     const directionsRenderer = new google.maps.DirectionsRenderer({
       map: map,
@@ -716,7 +712,7 @@
       directionsService.route({
         origin: currentLocation,
         destination: destination,
-        travelMode: google.maps.TravelMode.WALKING,
+        travelMode: google.maps.TravelMode.DRIVING, // Changed to DRIVING
         provideRouteAlternatives: true
       }, (response, status) => {
         if (status === 'OK') resolve(response);
@@ -724,10 +720,7 @@
       });
     });
 
-    // Display route on map
     directionsRenderer.setDirections(result);
-
-    // Analyze and display routes
     const safetyAnalysis = await analyzeSafetyForRoutes(result.routes);
     displayRouteAnalysis(safetyAnalysis);
 
@@ -736,6 +729,7 @@
     alert('Failed to plan route. Please try again.');
   }
 }
+
     async function analyzeSafetyForRoutes(routes) {
       const hour = new Date().getHours();
       const isDaytime = hour >= 6 && hour <= 18;
@@ -749,10 +743,11 @@
         },
         routes: routes.map((route, index) => ({
           index: index,
-          name: index === 0 ? 'Recommended Safe Route' : `Alternative Route ${index + 1}`,
+          name: index === 0 ? 'Most Recommended Route' : `Alternative Route ${index + 1}`,
+          rank: index + 1,
           distance: route.legs[0].distance.text,
           duration: route.legs[0].duration.text,
-          safety: (10 - index).toFixed(1)
+          safety: `Rank ${index + 1}`
         }))
       };
     }
@@ -766,7 +761,7 @@
         <div class="safety-metric">
           <i class="fas fa-shield-alt"></i>
           <div>Overall Safety</div>
-          <strong>${data.safetyAnalysis.overallSafety}/10</strong>
+          <strong>Rank 1</strong>
         </div>
         <div class="safety-metric">
           <i class="fas fa-lightbulb"></i>
@@ -788,11 +783,11 @@
       routesDiv.innerHTML = data.routes.map(route => `
         <div class="route-option" onclick="selectRoute(${route.index})">
           <div class="route-header">
-            <h5><i class="fas fa-route"></i> ${route.name}</h5>
-            <span>Safety Score: ${route.safety}/10</span>
+            <h5><i class="fas fa-car"></i> ${route.name}</h5>
+            <span class="safety-rank">Safety: ${route.safety}</span>
           </div>
           <div class="route-details">
-            <span><i class="fas fa-clock"></i> ${route.duration}</span>
+            <span><i class="fas fa-clock"></i> Drive time: ${route.duration}</span>
             <span><i class="fas fa-road"></i> ${route.distance}</span>
           </div>
         </div>
