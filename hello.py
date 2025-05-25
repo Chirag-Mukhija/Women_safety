@@ -1,5 +1,0 @@
-print("Hello World.\n")
-name=input("Enter Your Name.")
-print("Name = ",name)
-print("I knew i am correct.")
-a=input("press ENTER to exit...")
